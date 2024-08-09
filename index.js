@@ -30,10 +30,21 @@ app.get("/api/persons", (request, response) => {
 
 app.get("/info", (request, response) => {
   const numberOfPeople = persons.length;
-  const timestamp = Date.now();
-  const currentDate = new Date(timestamp);
-  response.send(`<p>Phonebook has info for ${numberOfPeople} people</p>
-                 <p>${currentDate.toString()}</p>`);
+  const timeStamp = Date.now();
+  const currentDate = new Date(timeStamp);
+  response.send(`<p>Phonebook has info for ${numberOfPeople}</p>
+                 <p>${currentDate}</p>`);
+});
+
+app.get("/api/persons/:id", (request, response) => {
+  const id = request.params.id;
+  const person = persons.find((person) => person.id === id);
+
+  if (person) {
+    response.json(person);
+  } else {
+    response.status(404).end();
+  }
 });
 
 const PORT = 3001;
