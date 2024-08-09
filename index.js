@@ -3,7 +3,15 @@ const app = express();
 var morgan = require("morgan");
 
 app.use(express.json());
-app.use(morgan("tiny"));
+morgan.token("body", function (request, response) {
+  if (request.method === "POST") {
+    return JSON.stringify(request.body);
+  }
+});
+
+app.use(
+  morgan(":method :url :status :res[content-length] - :response-time ms :body")
+);
 
 let persons = [
   {
@@ -59,7 +67,6 @@ app.delete("/api/persons/:id", (request, response) => {
 
 app.post("/api/persons", (request, response) => {
   const body = request.body;
-  console.log("Body: ", body);
 
   if (body.name) {
     const nameAlreadyPresent = persons.some(
