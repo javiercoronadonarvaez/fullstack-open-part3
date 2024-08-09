@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 
+app.use(express.json());
+
 let persons = [
   {
     id: "1",
@@ -51,6 +53,23 @@ app.delete("/api/persons/:id", (request, response) => {
   const id = request.params.id;
   persons = persons.filter((person) => person.id !== id);
   response.status(204).end();
+});
+
+app.post("/api/persons", (request, response) => {
+  const body = request.body;
+  console.log("Body: ", body);
+  if (body.name && body.number) {
+    const id = String(Math.floor(Math.random() * persons.length * 100));
+    const newEntry = { name: body.name, number: body.number, id: id };
+    persons = persons.concat(newEntry);
+    response.json(newEntry);
+  } else {
+    return response
+      .status(400)
+      .json({
+        error: "Need to include both name and number to add a new contact",
+      });
+  }
 });
 
 const PORT = 3001;
