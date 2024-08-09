@@ -58,17 +58,27 @@ app.delete("/api/persons/:id", (request, response) => {
 app.post("/api/persons", (request, response) => {
   const body = request.body;
   console.log("Body: ", body);
+
+  if (body.name) {
+    const nameAlreadyPresent = persons.some(
+      (person) => person.name === body.name
+    );
+    if (nameAlreadyPresent) {
+      return response
+        .status(400)
+        .json({ error: "The name already exists in the phonebook" });
+    }
+  }
+
   if (body.name && body.number) {
     const id = String(Math.floor(Math.random() * persons.length * 100));
     const newEntry = { name: body.name, number: body.number, id: id };
     persons = persons.concat(newEntry);
     response.json(newEntry);
   } else {
-    return response
-      .status(400)
-      .json({
-        error: "Need to include both name and number to add a new contact",
-      });
+    return response.status(400).json({
+      error: "The name or number is missing",
+    });
   }
 });
 
