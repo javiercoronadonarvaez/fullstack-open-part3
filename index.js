@@ -13,6 +13,9 @@ app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body")
 );
 
+const cors = require("cors");
+app.use(cors());
+
 let persons = [
   {
     id: "1",
@@ -59,10 +62,27 @@ app.get("/api/persons/:id", (request, response) => {
   }
 });
 
+app.put("/api/persons/:id", (request, response) => {
+  const body = request.body;
+  const id = body.id;
+  console.log("Persons: ", persons);
+  persons = persons.map((person) => (person.id === id ? body : person));
+  console.log("Updated Persons: ", persons);
+  response.json(body);
+  response.status(204).end();
+});
+
 app.delete("/api/persons/:id", (request, response) => {
   const id = request.params.id;
-  persons = persons.filter((person) => person.id !== id);
-  response.status(204).end();
+  const deletedPerson = persons.find((person) => person.id === id);
+  if (deletedPerson) {
+    persons = persons.filter((person) => person !== deletedPerson);
+    console.log("Person to be deleted: ", deletedPerson);
+    response.json(deletedPerson);
+    response.status(204).end();
+  } else {
+    response.status(404).send({ error: "User already deleted" });
+  }
 });
 
 app.post("/api/persons", (request, response) => {
@@ -80,10 +100,12 @@ app.post("/api/persons", (request, response) => {
   }
 
   if (body.name && body.number) {
-    const id = String(Math.floor(Math.random() * persons.length * 100));
+    //const id = String(Math.floor(Math.random() * persons.length * 100));
+    const id = body.id;
     const newEntry = { name: body.name, number: body.number, id: id };
     persons = persons.concat(newEntry);
     response.json(newEntry);
+    console.log(newEntry);
   } else {
     return response.status(400).json({
       error: "The name or number is missing",
