@@ -7,7 +7,6 @@ if (process.argv.length < 3) {
 
 const password = process.argv[2];
 
-//const url = `mongodb+srv://fullstack:${8cEDMoG0sUd61q0U}@cluster0.o1opl.mongodb.net/?retryWrites=true&w=majority`;
 const url = `mongodb+srv://javiercoronarv:${password}@fullstack-open-jcn.8fv7i.mongodb.net/phonebook?retryWrites=true&w=majority&appName=fullstack-open-jcn`;
 
 mongoose.set("strictQuery", false);
@@ -39,17 +38,3 @@ if (process.argv.length > 3) {
     mongoose.connection.close();
   });
 }
-
-// saveNotesList(notesList);
-
-// note.save().then((result) => {
-//   console.log("note saved!");
-//   mongoose.connection.close();
-// });
-
-// Note.find({}).then((result) => {
-//   result.forEach((note) => {
-//     console.log(note);
-//   });
-//   mongoose.connection.close();
-// });
