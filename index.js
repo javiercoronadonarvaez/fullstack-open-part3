@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 var morgan = require("morgan");
@@ -18,31 +19,11 @@ app.use(cors());
 
 app.use(express.static("dist"));
 
-let persons = [
-  {
-    id: "1",
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: "2",
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: "3",
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: "4",
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
+const User = require("./models/user");
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  //response.json(persons);
+  User.find({}).then((persons) => response.json(persons));
 });
 
 app.get("/info", (request, response) => {
@@ -90,29 +71,42 @@ app.delete("/api/persons/:id", (request, response) => {
 app.post("/api/persons", (request, response) => {
   const body = request.body;
 
-  if (body.name) {
-    const nameAlreadyPresent = persons.some(
-      (person) => person.name === body.name
-    );
-    if (nameAlreadyPresent) {
-      return response
-        .status(400)
-        .json({ error: "The name already exists in the phonebook" });
-    }
-  }
-
-  if (body.name && body.number) {
-    //const id = String(Math.floor(Math.random() * persons.length * 100));
-    const id = body.id;
-    const newEntry = { name: body.name, number: body.number, id: id };
-    persons = persons.concat(newEntry);
-    response.json(newEntry);
-    console.log(newEntry);
-  } else {
+  if (body === undefined) {
     return response.status(400).json({
-      error: "The name or number is missing",
+      error: "content missing",
     });
   }
+
+  const user = User({
+    name: body.name,
+    number: body.number,
+  });
+
+  user.save().then((savedUser) => response.json(savedUser));
+
+  // if (body.name) {
+  //   const nameAlreadyPresent = persons.some(
+  //     (person) => person.name === body.name
+  //   );
+  //   if (nameAlreadyPresent) {
+  //     return response
+  //       .status(400)
+  //       .json({ error: "The name already exists in the phonebook" });
+  //   }
+  // }
+
+  // if (body.name && body.number) {
+  //   //const id = String(Math.floor(Math.random() * persons.length * 100));
+  //   const id = body.id;
+  //   const newEntry = { name: body.name, number: body.number, id: id };
+  //   persons = persons.concat(newEntry);
+  //   response.json(newEntry);
+  //   console.log(newEntry);
+  // } else {
+  //   return response.status(400).json({
+  //     error: "The name or number is missing",
+  //   });
+  // }
 });
 
 const requestLogger = (request, response, next) => {
