@@ -10,7 +10,11 @@ mongoose
   .catch((error) => `Failed to connect with error ${error.message}`);
 
 const userSchema = mongoose.Schema({
-  name: String,
+  name: {
+    type: String,
+    minLength: 3,
+    required: true,
+  },
   number: String,
 });
 
