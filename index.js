@@ -36,32 +36,49 @@ app.get("/api/persons", (request, response) => {
 });
 
 app.get("/info", (request, response) => {
-  const numberOfPeople = persons.length;
   const timeStamp = Date.now();
   const currentDate = new Date(timeStamp);
-  response.send(`<p>Phonebook has info for ${numberOfPeople}</p>
-                 <p>${currentDate}</p>`);
+  User.find({}).then((persons) =>
+    response.send(`<p>Phonebook has info for ${persons.length} people</p>
+    <p>${currentDate}</p>`)
+  );
 });
 
-app.get("/api/persons/:id", (request, response) => {
+app.get("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
-  const person = persons.find((person) => person.id === id);
-
-  if (person) {
-    response.json(person);
-  } else {
-    response.status(404).json({ error: "Person Profile does not exist" });
-  }
+  User.findById(id)
+    .then((requestedPerson) => {
+      if (requestedPerson) {
+        response.json(requestedPerson);
+      } else {
+        response.status(404).json({ error: "Person Profile does not exist" });
+      }
+    })
+    .catch((error) => next(error));
 });
 
-app.put("/api/persons/:id", (request, response) => {
+app.put("/api/persons/:id", (request, response, next) => {
   const body = request.body;
-  const id = body.id;
-  console.log("Persons: ", persons);
-  persons = persons.map((person) => (person.id === id ? body : person));
-  console.log("Updated Persons: ", persons);
-  response.json(body);
-  response.status(204).end();
+
+  if (body === undefined) {
+    return response.status(400).send({ error: "Missing fields to update" });
+  }
+
+  const updatedUser = {
+    name: body.name,
+    number: body.number,
+  };
+
+  const id = request.params.id;
+  User.findByIdAndUpdate(id, updatedUser, { new: true })
+    .then((updatedUser) => {
+      if (updatedUser) {
+        response.json(updatedUser);
+      } else {
+        response.status(404).json({ error: "Person Profile does not exist" });
+      }
+    })
+    .catch((error) => next(error));
 });
 
 app.delete("/api/persons/:id", (request, response, next) => {
@@ -82,36 +99,16 @@ app.post("/api/persons", (request, response) => {
     });
   }
 
-  const user = User({
+  const user = new User({
     name: body.name,
     number: body.number,
   });
 
-  user.save().then((savedUser) => response.json(savedUser));
-
-  // if (body.name) {
-  //   const nameAlreadyPresent = persons.some(
-  //     (person) => person.name === body.name
-  //   );
-  //   if (nameAlreadyPresent) {
-  //     return response
-  //       .status(400)
-  //       .json({ error: "The name already exists in the phonebook" });
-  //   }
-  // }
-
-  // if (body.name && body.number) {
-  //   //const id = String(Math.floor(Math.random() * persons.length * 100));
-  //   const id = body.id;
-  //   const newEntry = { name: body.name, number: body.number, id: id };
-  //   persons = persons.concat(newEntry);
-  //   response.json(newEntry);
-  //   console.log(newEntry);
-  // } else {
-  //   return response.status(400).json({
-  //     error: "The name or number is missing",
-  //   });
-  // }
+  user.save().then((savedUser) => {
+    const transformedUser = savedUser.toJSON();
+    response.json(transformedUser);
+    console.log("New User", transformedUser);
+  });
 });
 
 const unknownEndpoint = (request, response) => {
@@ -130,7 +127,6 @@ const errorHandler = (error, request, response, next) => {
   next(error);
 };
 
-// this has to be the last loaded middleware, also all the routes should be registered before this!
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
