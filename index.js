@@ -84,9 +84,7 @@ app.put("/api/persons/:id", (request, response, next) => {
 app.delete("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
   User.findByIdAndDelete(id)
-    .then(
-      (deletedUser) => (response.json(deletedUser), response.status(202).end())
-    )
+    .then((deletedUser) => response.json(deletedUser))
     .catch((error) => next(error));
 });
 
@@ -97,6 +95,12 @@ app.post("/api/persons", (request, response, next) => {
     return response.status(400).json({
       error: "content missing",
     });
+  }
+
+  if (!body.name || !body.number) {
+    return response
+      .status(400)
+      .json({ error: "The name or number is missing" });
   }
 
   const user = new User({
@@ -124,7 +128,7 @@ const errorHandler = (error, request, response, next) => {
   console.error(error.message);
 
   if (error.name === "CastError") {
-    return response.status(400).send({ error: "malformatted id" });
+    return response.status(400).send({ error: "Malformatted ID" });
   } else if (error.name === "ValidationError") {
     return response.status(400).send({ error: error.message });
   }
