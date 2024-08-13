@@ -21,8 +21,17 @@ app.use(express.static("dist"));
 
 const User = require("./models/user");
 
+const requestLogger = (request, response, next) => {
+  console.log("Method:", request.method);
+  console.log("Path:  ", request.path);
+  console.log("Body:  ", request.body);
+  console.log("---");
+  next();
+};
+
+app.use(requestLogger);
+
 app.get("/api/persons", (request, response) => {
-  //response.json(persons);
   User.find({}).then((persons) => response.json(persons));
 });
 
@@ -55,17 +64,13 @@ app.put("/api/persons/:id", (request, response) => {
   response.status(204).end();
 });
 
-app.delete("/api/persons/:id", (request, response) => {
+app.delete("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
-  const deletedPerson = persons.find((person) => person.id === id);
-  if (deletedPerson) {
-    persons = persons.filter((person) => person !== deletedPerson);
-    console.log("Person to be deleted: ", deletedPerson);
-    response.json(deletedPerson);
-    response.status(204).end();
-  } else {
-    response.status(404).send({ error: "User already deleted" });
-  }
+  User.findByIdAndDelete(id)
+    .then(
+      (deletedUser) => (response.json(deletedUser), response.status(202).end())
+    )
+    .catch((error) => next(error));
 });
 
 app.post("/api/persons", (request, response) => {
@@ -109,21 +114,24 @@ app.post("/api/persons", (request, response) => {
   // }
 });
 
-const requestLogger = (request, response, next) => {
-  console.log("Method:", request.method);
-  console.log("Path:  ", request.path);
-  console.log("Body:  ", request.body);
-  console.log("---");
-  next();
-};
-
-app.use(requestLogger);
-
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: "unknown endpoint" });
 };
 
 app.use(unknownEndpoint);
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  }
+
+  next(error);
+};
+
+// this has to be the last loaded middleware, also all the routes should be registered before this!
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
